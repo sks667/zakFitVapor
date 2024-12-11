@@ -71,4 +71,4 @@ services:
       MYSQL_DATABASE: vapor_database
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
     ports:
-      - '3306:3306'
+      - '3307:3306'
