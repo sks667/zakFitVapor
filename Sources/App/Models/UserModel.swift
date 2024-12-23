@@ -22,7 +22,7 @@ final class User: Model, Content, @unchecked Sendable {
     var prenom: String
 
     @Field(key: "taille")
-    var taille: Int
+    var taille: Int?
 
     @Field(key: "email")
     var email: String
@@ -31,15 +31,15 @@ final class User: Model, Content, @unchecked Sendable {
     var mdp: String
     
     @Field(key: "poids")
-    var poids: Int
+    var poids: Int?
 
     @Field(key: "preference_alimentaire")
-    var preference_alimentaire: String
+    var preference_alimentaire: String?
     
     init() {
     }
     
-    init(id: UUID? = nil, nom: String, prenom: String, taille: Int, email: String, mdp: String, poids: Int, preference_alimentaire: String) {
+    init(id: UUID? = nil, nom: String, prenom: String, taille: Int? = nil, email: String, mdp: String, poids: Int? = nil, preference_alimentaire: String? = nil) {
         self.id = id
         self.nom = nom
         self.prenom = prenom
@@ -48,6 +48,7 @@ final class User: Model, Content, @unchecked Sendable {
         self.mdp = mdp
         self.poids = poids
         self.preference_alimentaire = preference_alimentaire
+        
     }
     
     func toDTO() -> UserDTO {
@@ -61,7 +62,6 @@ final class User: Model, Content, @unchecked Sendable {
             preference_alimentaire: self.preference_alimentaire)
     }
 
-    
 }
 
 // Place l'extension en dehors de la classe
@@ -73,4 +73,5 @@ extension User: ModelAuthenticatable {
         try Bcrypt.verify(password, created: self.mdp)
     }
 }
+
 

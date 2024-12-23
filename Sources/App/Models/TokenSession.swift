@@ -9,7 +9,7 @@ import JWTKit
 import Vapor
 
 struct TokkenSession: Content, Authenticatable, JWTPayload{
-    var expirationTime: TimeInterval = 60 * 1
+    var expirationTime: TimeInterval = 60 * 3
     
     // token Data
     var expiration: ExpirationClaim

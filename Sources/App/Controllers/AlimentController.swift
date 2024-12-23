@@ -19,18 +19,26 @@ struct AlimentController: RouteCollection {
         
         let authGroups = aliments.grouped(tokenAuthMiddleware, guardtokenhMiddleware)
         
-        aliments.get(use: get)
-        authGroups.post(use: create)
+        authGroups.get(use: get)
+        aliments.post(use: create)
         authGroups.delete(":alimentID", use: delete)
         
 
         
     }
         
-        @Sendable
-        func get(req: Request) async throws -> [Aliment] {
-            return try await Aliment.query(on: req.db).all()
-        }
+    @Sendable
+    func get(req: Request) async throws -> [Aliment] {
+        let user = try req.auth.require(User.self) // Récupérer l'utilisateur connecté
+        
+        // Récupérer les aliments de base (id_userr = NULL) et les aliments personnels de l'utilisateur
+        return try await Aliment.query(on: req.db)
+            .group(.or) { group in
+                group.filter(\.$user.$id == user.id) // Aliments personnels
+                group.filter(\.$user.$id == nil)    // Aliments de base
+            }
+            .all()
+    }
         
         @Sendable
         func create (req: Request) async throws -> Aliment {

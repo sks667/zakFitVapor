@@ -15,9 +15,9 @@ struct UserDTO: Content {
     var nom: String
     var prenom: String
     var email: String
-    var taille: Int
-    var poids: Int
-    var preference_alimentaire: String
+    var taille: Int?
+    var poids: Int?
+    var preference_alimentaire: String?
     
     func convertToPublic() -> UserDTO {
         return UserDTO(id: id, nom: nom, prenom: prenom, email: email, taille: taille, poids: poids, preference_alimentaire: preference_alimentaire)

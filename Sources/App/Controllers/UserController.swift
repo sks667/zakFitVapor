@@ -11,24 +11,32 @@ import Vapor
 
 struct UserController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
+        
         let users = routes.grouped("user")
-        
-        users.get(use: index)
-        users.post(use: create)
-        users.delete(":userID", use: delete)
-        
-        let basicAuthMiddleware = User.authenticator()
-        let guardAuthMiddleware = User.guardMiddleware()
-        
-        let authGroups = users.grouped(basicAuthMiddleware, guardAuthMiddleware)
-        authGroups.post("login", use: login)
-        
+
+                // Middleware JWT pour protéger les routes privées
+            let tokenAuthMiddleware = TokkenSession.authenticator()
+            let guardtokenhMiddleware = TokkenSession.guardMiddleware()
+            let authGroups = users.grouped(tokenAuthMiddleware, guardtokenhMiddleware)
+
+                users.post(use: create) // Création d’un utilisateur
+                users.post("login", use: login) // Connexion
+                authGroups.get("me", use: me) // Récupérer l'utilisateur connecté
+                users.get(use: index) // Liste de tous les utilisateurs
+                authGroups.delete(":userID", use: delete) // Suppression d’un utilisateur
     }
     
     @Sendable
     func index(req: Request) async throws -> [UserDTO] {
         let users = try await User.query(on: req.db).all()
         return users.map{$0.toDTO()}
+    }
+    
+    
+    @Sendable
+    func me(req: Request) async throws -> UserDTO {
+        let user = try req.auth.require(User.self)
+        return user.toDTO()
     }
     
     @Sendable

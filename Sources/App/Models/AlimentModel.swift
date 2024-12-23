@@ -4,11 +4,12 @@
 //
 //  Created by Apprenant 178 on 05/12/2024.
 //
+
 import Foundation
 import Fluent
 import Vapor
 
-final class Aliment: Model, Content, @unchecked Sendable{
+final class Aliment: Model, Content, @unchecked Sendable {
     static let schema = "aliment"
 
     @ID(key: .id)
@@ -26,12 +27,20 @@ final class Aliment: Model, Content, @unchecked Sendable{
     @Field(key: "qte_lipide")
     var qteLipide: Int
 
+    @OptionalParent(key: "id_userr")
+    var user: User?
+
     init() {}
-    init(id: UUID? = nil, nom: String, qteCalorie: Int, qteGlucide: Int, qteLipide: Int) {
+    
+    init(id: UUID? = nil, nom: String, qteCalorie: Int, qteGlucide: Int, qteLipide: Int, userID: UUID? = nil) {
         self.id = id
         self.nom = nom
         self.qteCalorie = qteCalorie
         self.qteGlucide = qteGlucide
         self.qteLipide = qteLipide
+        if let userID = userID {
+                    self.$user.id = userID
+                }
+        
     }
 }
