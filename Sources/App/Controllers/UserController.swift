@@ -13,17 +13,16 @@ struct UserController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         
         let users = routes.grouped("user")
-
-                // Middleware JWT pour protéger les routes privées
-            let tokenAuthMiddleware = TokkenSession.authenticator()
-            let guardtokenhMiddleware = TokkenSession.guardMiddleware()
-            let authGroups = users.grouped(tokenAuthMiddleware, guardtokenhMiddleware)
-
-                users.post(use: create) // Création d’un utilisateur
-                users.post("login", use: login) // Connexion
-                authGroups.get("me", use: me) // Récupérer l'utilisateur connecté
-                users.get(use: index) // Liste de tous les utilisateurs
-                authGroups.delete(":userID", use: delete) // Suppression d’un utilisateur
+                
+                users.get(use: index)
+                users.post(use: create)
+                users.delete(":userID", use: delete)
+                
+                let basicAuthMiddleware = User.authenticator()
+                let guardAuthMiddleware = User.guardMiddleware()
+                
+                let authGroups = users.grouped(basicAuthMiddleware, guardAuthMiddleware)
+                authGroups.post("login", use: login)
     }
     
     @Sendable
