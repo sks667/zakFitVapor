@@ -26,21 +26,22 @@ final class Aliment: Model, Content, @unchecked Sendable {
 
     @Field(key: "qte_lipide")
     var qteLipide: Int
+    
+    @OptionalParent(key: "id_userrr")
+        var user: User?
+    
+    
 
-    @OptionalParent(key: "id_userr")
-    var user: User?
+
 
     init() {}
-    
-    init(id: UUID? = nil, nom: String, qteCalorie: Int, qteGlucide: Int, qteLipide: Int, userID: UUID? = nil) {
+
+    init(id: UUID? = nil, nom: String, qteCalorie: Int, qteGlucide: Int, qteLipide: Int) {
         self.id = id
         self.nom = nom
         self.qteCalorie = qteCalorie
         self.qteGlucide = qteGlucide
         self.qteLipide = qteLipide
-        if let userID = userID {
-                    self.$user.id = userID
-                }
         
     }
 }

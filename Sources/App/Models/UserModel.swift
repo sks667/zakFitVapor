@@ -36,6 +36,8 @@ final class User: Model, Content, @unchecked Sendable {
     @Field(key: "preference_alimentaire")
     var preference_alimentaire: String?
     
+    
+    
     init() {
     }
     

@@ -23,3 +23,5 @@ struct TokkenSession: Content, Authenticatable, JWTPayload{
         try expiration.verifyNotExpired()
     }
 }
+
+

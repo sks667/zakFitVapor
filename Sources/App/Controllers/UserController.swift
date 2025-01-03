@@ -11,18 +11,20 @@ import Vapor
 
 struct UserController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        
         let users = routes.grouped("user")
-                
-                users.get(use: index)
-                users.post(use: create)
-                users.delete(":userID", use: delete)
-                
-                let basicAuthMiddleware = User.authenticator()
-                let guardAuthMiddleware = User.guardMiddleware()
-                
-                let authGroups = users.grouped(basicAuthMiddleware, guardAuthMiddleware)
-                authGroups.post("login", use: login)
+        
+
+        users.get(use: index)
+        users.post(use: create)
+        users.delete(":userID", use: delete)
+        
+
+        let basicAuthMiddleware = User.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let authGroups = users.grouped(basicAuthMiddleware, guardAuthMiddleware)
+        
+        authGroups.post("login", use: login)
+        authGroups.get("profile", use: getProfile)
     }
     
     @Sendable
@@ -33,23 +35,42 @@ struct UserController: RouteCollection {
     
     
     @Sendable
-    func me(req: Request) async throws -> UserDTO {
-        let user = try req.auth.require(User.self)
+    func getProfile(req: Request) async throws -> UserDTO {
+        // Log initial
+        req.logger.info("Début de la méthode getProfile")
+
+        // Vérifie si un utilisateur est authentifié
+        guard let user = try? req.auth.require(User.self) else {
+            req.logger.error("Utilisateur non authentifié")
+            throw Abort(.unauthorized, reason: "User not authenticated.")
+        }
+
+        // Log utilisateur authentifié
+        req.logger.info("Utilisateur authentifié : \(user.email), ID : \(user.id?.uuidString ?? "Inconnu")")
+
+        // Retourne le DTO
         return user.toDTO()
     }
     
+    
     @Sendable
-    func create(req: Request) async throws -> UserDTO {
-        do {
-            let user = try req.content.decode(User.self)
-            user.mdp = try Bcrypt.hash(user.mdp) // hachage du mdp
-            try await user.save(on: req.db)
-            return user.toDTO()
-        } catch {
-            print("Erreur lors de la création de l'utilisateur:", error)
-            throw Abort(.internalServerError, reason: "Erreur de création d'utilisateur.")
+        func create(req: Request) async throws -> UserDTO {
+            do {
+                let user = try req.content.decode(User.self)
+                
+                // Vérifie l'email
+                if let _ = try await User.query(on: req.db).filter(\.$email == user.email).first() {
+                    throw Abort(.badRequest, reason: "Cet email est déjà utilisé.")
+                }
+                
+                user.mdp = try Bcrypt.hash(user.mdp) // Hashage du mot de passe
+                try await user.save(on: req.db)
+                return user.toDTO()
+            } catch {
+                req.logger.error("Erreur lors de la création de l'utilisateur: \(error.localizedDescription)")
+                throw Abort(.internalServerError, reason: "Erreur de création d'utilisateur.")
+            }
         }
-    }
     
     @Sendable
     func delete(req: Request) async throws -> HTTPStatus {
@@ -68,17 +89,12 @@ struct UserController: RouteCollection {
     
     
     @Sendable
-    func login(req: Request) async throws -> [String:String] {
-        // Récupération des logins/mdp
-        let user = try req.auth.require(User.self)
-        // Création du payload en fonction des informations du user
-        let payload = try TokkenSession(with: user)
-        // Création d'un token signé à partir du payload
-        let token = try await req.jwt.sign(payload)
-        // Envoi du token à l'utilisateur sous forme de dictionnaire return ["token":
-        return ["token": token]
-        
-    }
+        func login(req: Request) async throws -> [String: String] {
+            let user = try req.auth.require(User.self)
+            let payload = try TokkenSession(with: user)
+            let token = try await req.jwt.sign(payload)
+            return ["token": token]
+        }
 }
 
 

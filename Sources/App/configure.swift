@@ -2,6 +2,7 @@ import NIOSSL
 import Fluent
 import FluentMySQLDriver
 import Vapor
+import JWTKit
 import JWT
 
 // configures your application
@@ -31,7 +32,7 @@ public func configure(_ app: Application) async throws {
 
     let corsConfiguration =  CORSMiddleware.Configuration(
         allowedOrigin: .all,
-        allowedMethods: [.GET, .POST],
+        allowedMethods: [.GET, .POST, .DELETE],
         allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith],
         cacheExpiration: 800
     )
@@ -39,5 +40,8 @@ public func configure(_ app: Application) async throws {
     let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
     app.middleware.use(corsMiddleware)
     
+    
+
+
  
 }
