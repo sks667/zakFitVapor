@@ -9,6 +9,7 @@ import Foundation
 import Fluent
 import Vapor
 import JWTKit
+import FluentSQL
 
 struct AlimentController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -22,7 +23,7 @@ struct AlimentController: RouteCollection {
         
         aliments.get(use: get)
         aliments.post(use: create)
-        
+        aliments.get("count", use: countAliments)
  
     }
         
@@ -71,6 +72,21 @@ struct AlimentController: RouteCollection {
             qteGlucide: aliment.qteGlucide,
             qteLipide: aliment.qteLipide
         )
+    }
+    @Sendable
+    func countAliments(req: Request) async throws -> Int {
+        // Conversion de la base de données en SQLDatabase
+        let sqlDb = req.db as! SQLDatabase
+        
+        // Requête brute pour compter les aliments
+        let result = try await sqlDb.raw("SELECT COUNT(*) AS totalCount FROM aliment")
+            .first(decoding: TotalCount.self)
+
+        struct TotalCount: Decodable {
+            let totalCount: Int
+        }
+
+        return result?.totalCount ?? 0
     }
         
     

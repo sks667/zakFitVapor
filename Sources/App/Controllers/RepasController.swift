@@ -64,7 +64,6 @@ struct RepasController: RouteCollection {
     @Sendable
     func create(req: Request) async throws -> HTTPStatus {
         struct CreateRepasInput: Content {
-            var calorieTotal: Double
             var typeRepas: String
             var dateRepas: Date
             var aliments: [ContientInput]
@@ -80,9 +79,9 @@ struct RepasController: RouteCollection {
         // Récupérer l'utilisateur authentifié
         let user = try req.auth.require(User.self)
 
-        // Créer le repas pour cet utilisateur
+        // Créer le repas sans calories totales au début
         let repas = Repas(
-            calorieTotal: input.calorieTotal,
+            calorieTotal: 0,  // Initialement à zéro, on fera la somme ensuite
             typeRepas: input.typeRepas,
             dateRepas: input.dateRepas,
             userID: try user.requireID()
@@ -91,6 +90,8 @@ struct RepasController: RouteCollection {
         try await repas.save(on: req.db)
 
         // Parcourir les aliments envoyés par l'utilisateur
+        var totalCalories = 0.0
+
         for aliment in input.aliments {
             // Rechercher l'aliment en base de données
             guard let alimentEnBase = try await Aliment.find(aliment.alimentID, on: req.db) else {
@@ -98,17 +99,22 @@ struct RepasController: RouteCollection {
             }
 
             // Calculer les calories pour la quantité donnée
-            let calories = (aliment.quantite * alimentEnBase.qteCalorie) / 100
+            let calories = (Double(aliment.quantite) * Double(alimentEnBase.qteCalorie)) / 100
+            totalCalories += calories
 
             // Créer une relation dans la table `Contient`
             let contient = Contient(
                 repasID: try repas.requireID(),
                 alimentID: aliment.alimentID,
                 quantite: aliment.quantite,
-                calorie: calories
+                calorie: Int(calories)
             )
             try await contient.save(on: req.db)
         }
+
+        // Mettre à jour les calories totales du repas
+        repas.calorieTotal = totalCalories
+        try await repas.update(on: req.db)
 
         return .created
     }
@@ -119,7 +125,6 @@ struct RepasController: RouteCollection {
             throw Abort(.badRequest, reason: "Invalid repas ID.")
         }
 
-        // Récupérer le repas à supprimer
         guard let repas = try await Repas.find(repasID, on: req.db) else {
             throw Abort(.notFound, reason: "Repas not found.")
         }
