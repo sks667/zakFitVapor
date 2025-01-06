@@ -27,7 +27,10 @@ final class Aliment: Model, Content, @unchecked Sendable {
     @Field(key: "qte_lipide")
     var qteLipide: Int
     
-    @OptionalParent(key: "id_userrr")
+    /// Utilisateur associé à l'aliment (relation optionnelle).
+        ///
+        /// - Important : Ce champ utilise une clé étrangère `id_userrr` pour identifier l'utilisateur.
+        @OptionalParent(key: "id_userrr")
         var user: User?
     
     
